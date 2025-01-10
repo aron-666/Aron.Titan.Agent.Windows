@@ -96,7 +96,7 @@
             materialTabControl1.Multiline = true;
             materialTabControl1.Name = "materialTabControl1";
             materialTabControl1.SelectedIndex = 0;
-            materialTabControl1.Size = new Size(786, 761);
+            materialTabControl1.Size = new Size(830, 863);
             materialTabControl1.TabIndex = 1;
             // 
             // tabOverview
@@ -106,7 +106,7 @@
             tabOverview.Location = new Point(4, 28);
             tabOverview.Name = "tabOverview";
             tabOverview.Padding = new Padding(3);
-            tabOverview.Size = new Size(778, 729);
+            tabOverview.Size = new Size(822, 831);
             tabOverview.TabIndex = 0;
             tabOverview.Text = "Overview";
             // 
@@ -123,7 +123,7 @@
             tableLayoutPanel1.RowCount = 2;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 75F));
-            tableLayoutPanel1.Size = new Size(772, 723);
+            tableLayoutPanel1.Size = new Size(816, 825);
             tableLayoutPanel1.TabIndex = 0;
             // 
             // tableLayoutPanel2
@@ -134,7 +134,7 @@
             tableLayoutPanel2.Controls.Add(tableLayoutPanel6, 0, 0);
             tableLayoutPanel2.Controls.Add(tableLayoutPanel7, 1, 0);
             tableLayoutPanel2.Dock = DockStyle.Fill;
-            tableLayoutPanel2.Location = new Point(0, 180);
+            tableLayoutPanel2.Location = new Point(0, 206);
             tableLayoutPanel2.Margin = new Padding(0);
             tableLayoutPanel2.Name = "tableLayoutPanel2";
             tableLayoutPanel2.RowCount = 1;
@@ -143,7 +143,7 @@
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tableLayoutPanel2.Size = new Size(772, 543);
+            tableLayoutPanel2.Size = new Size(816, 619);
             tableLayoutPanel2.TabIndex = 0;
             // 
             // tableLayoutPanel6
@@ -168,7 +168,7 @@
             tableLayoutPanel6.RowStyles.Add(new RowStyle(SizeType.Percent, 14.2857141F));
             tableLayoutPanel6.RowStyles.Add(new RowStyle(SizeType.Percent, 14.2857141F));
             tableLayoutPanel6.RowStyles.Add(new RowStyle(SizeType.Percent, 14.2857141F));
-            tableLayoutPanel6.Size = new Size(508, 537);
+            tableLayoutPanel6.Size = new Size(537, 613);
             tableLayoutPanel6.TabIndex = 0;
             // 
             // lbWinVersion
@@ -197,7 +197,7 @@
             lbWinVersion.SelectionLength = 0;
             lbWinVersion.SelectionStart = 0;
             lbWinVersion.ShortcutsEnabled = true;
-            lbWinVersion.Size = new Size(496, 48);
+            lbWinVersion.Size = new Size(525, 48);
             lbWinVersion.TabIndex = 2;
             lbWinVersion.TabStop = false;
             lbWinVersion.TextAlign = HorizontalAlignment.Left;
@@ -217,7 +217,7 @@
             lbVirtualization.HideSelection = true;
             lbVirtualization.Hint = "虛擬化狀態";
             lbVirtualization.LeadingIcon = null;
-            lbVirtualization.Location = new Point(6, 82);
+            lbVirtualization.Location = new Point(6, 93);
             lbVirtualization.Margin = new Padding(6);
             lbVirtualization.MaxLength = 32767;
             lbVirtualization.MouseState = MaterialSkin.MouseState.OUT;
@@ -230,7 +230,7 @@
             lbVirtualization.SelectionLength = 0;
             lbVirtualization.SelectionStart = 0;
             lbVirtualization.ShortcutsEnabled = true;
-            lbVirtualization.Size = new Size(496, 48);
+            lbVirtualization.Size = new Size(525, 48);
             lbVirtualization.TabIndex = 3;
             lbVirtualization.TabStop = false;
             lbVirtualization.TextAlign = HorizontalAlignment.Left;
@@ -250,7 +250,7 @@
             lbVm.HideSelection = true;
             lbVm.Hint = "VM 狀態";
             lbVm.LeadingIcon = null;
-            lbVm.Location = new Point(6, 158);
+            lbVm.Location = new Point(6, 180);
             lbVm.Margin = new Padding(6);
             lbVm.MaxLength = 32767;
             lbVm.MouseState = MaterialSkin.MouseState.OUT;
@@ -263,7 +263,7 @@
             lbVm.SelectionLength = 0;
             lbVm.SelectionStart = 0;
             lbVm.ShortcutsEnabled = true;
-            lbVm.Size = new Size(496, 48);
+            lbVm.Size = new Size(525, 48);
             lbVm.TabIndex = 4;
             lbVm.TabStop = false;
             lbVm.TextAlign = HorizontalAlignment.Left;
@@ -283,7 +283,7 @@
             lbMultipassStatus.HideSelection = true;
             lbMultipassStatus.Hint = "Multipass 狀態";
             lbMultipassStatus.LeadingIcon = null;
-            lbMultipassStatus.Location = new Point(6, 234);
+            lbMultipassStatus.Location = new Point(6, 267);
             lbMultipassStatus.Margin = new Padding(6);
             lbMultipassStatus.MaxLength = 32767;
             lbMultipassStatus.MouseState = MaterialSkin.MouseState.OUT;
@@ -296,7 +296,7 @@
             lbMultipassStatus.SelectionLength = 0;
             lbMultipassStatus.SelectionStart = 0;
             lbMultipassStatus.ShortcutsEnabled = true;
-            lbMultipassStatus.Size = new Size(496, 48);
+            lbMultipassStatus.Size = new Size(525, 48);
             lbMultipassStatus.TabIndex = 8;
             lbMultipassStatus.TabStop = false;
             lbMultipassStatus.TextAlign = HorizontalAlignment.Left;
@@ -316,7 +316,7 @@
             lbCPU.HideSelection = true;
             lbCPU.Hint = "vCPUs";
             lbCPU.LeadingIcon = null;
-            lbCPU.Location = new Point(6, 310);
+            lbCPU.Location = new Point(6, 354);
             lbCPU.Margin = new Padding(6);
             lbCPU.MaxLength = 32767;
             lbCPU.MouseState = MaterialSkin.MouseState.OUT;
@@ -329,7 +329,7 @@
             lbCPU.SelectionLength = 0;
             lbCPU.SelectionStart = 0;
             lbCPU.ShortcutsEnabled = true;
-            lbCPU.Size = new Size(496, 48);
+            lbCPU.Size = new Size(525, 48);
             lbCPU.TabIndex = 5;
             lbCPU.TabStop = false;
             lbCPU.TextAlign = HorizontalAlignment.Left;
@@ -349,7 +349,7 @@
             lbMem.HideSelection = true;
             lbMem.Hint = "Memory (GB)";
             lbMem.LeadingIcon = null;
-            lbMem.Location = new Point(6, 386);
+            lbMem.Location = new Point(6, 441);
             lbMem.Margin = new Padding(6);
             lbMem.MaxLength = 32767;
             lbMem.MouseState = MaterialSkin.MouseState.OUT;
@@ -362,7 +362,7 @@
             lbMem.SelectionLength = 0;
             lbMem.SelectionStart = 0;
             lbMem.ShortcutsEnabled = true;
-            lbMem.Size = new Size(496, 48);
+            lbMem.Size = new Size(525, 48);
             lbMem.TabIndex = 6;
             lbMem.TabStop = false;
             lbMem.TextAlign = HorizontalAlignment.Left;
@@ -382,7 +382,7 @@
             lbDisk.HideSelection = true;
             lbDisk.Hint = "Disk (GB)";
             lbDisk.LeadingIcon = null;
-            lbDisk.Location = new Point(6, 462);
+            lbDisk.Location = new Point(6, 528);
             lbDisk.Margin = new Padding(6);
             lbDisk.MaxLength = 32767;
             lbDisk.MouseState = MaterialSkin.MouseState.OUT;
@@ -395,7 +395,7 @@
             lbDisk.SelectionLength = 0;
             lbDisk.SelectionStart = 0;
             lbDisk.ShortcutsEnabled = true;
-            lbDisk.Size = new Size(496, 48);
+            lbDisk.Size = new Size(525, 48);
             lbDisk.TabIndex = 7;
             lbDisk.TabStop = false;
             lbDisk.TextAlign = HorizontalAlignment.Left;
@@ -413,7 +413,7 @@
             tableLayoutPanel7.Controls.Add(btnInstallVM, 0, 1);
             tableLayoutPanel7.Controls.Add(tableLayoutPanel8, 0, 0);
             tableLayoutPanel7.Dock = DockStyle.Fill;
-            tableLayoutPanel7.Location = new Point(514, 0);
+            tableLayoutPanel7.Location = new Point(543, 0);
             tableLayoutPanel7.Margin = new Padding(0);
             tableLayoutPanel7.Name = "tableLayoutPanel7";
             tableLayoutPanel7.RowCount = 6;
@@ -423,7 +423,7 @@
             tableLayoutPanel7.RowStyles.Add(new RowStyle(SizeType.Percent, 13.900013F));
             tableLayoutPanel7.RowStyles.Add(new RowStyle(SizeType.Percent, 13.9000149F));
             tableLayoutPanel7.RowStyles.Add(new RowStyle(SizeType.Percent, 13.9000149F));
-            tableLayoutPanel7.Size = new Size(258, 543);
+            tableLayoutPanel7.Size = new Size(273, 619);
             tableLayoutPanel7.TabIndex = 1;
             // 
             // btnLog
@@ -435,12 +435,12 @@
             btnLog.Dock = DockStyle.Fill;
             btnLog.HighEmphasis = true;
             btnLog.Icon = null;
-            btnLog.Location = new Point(4, 471);
+            btnLog.Location = new Point(4, 538);
             btnLog.Margin = new Padding(4, 6, 4, 6);
             btnLog.MouseState = MaterialSkin.MouseState.HOVER;
             btnLog.Name = "btnLog";
             btnLog.NoAccentTextColor = Color.Empty;
-            btnLog.Size = new Size(250, 66);
+            btnLog.Size = new Size(265, 75);
             btnLog.TabIndex = 9;
             btnLog.Text = "查看 Log";
             btnLog.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -457,12 +457,12 @@
             btnGoToDashboard.Dock = DockStyle.Fill;
             btnGoToDashboard.HighEmphasis = true;
             btnGoToDashboard.Icon = null;
-            btnGoToDashboard.Location = new Point(4, 396);
+            btnGoToDashboard.Location = new Point(4, 452);
             btnGoToDashboard.Margin = new Padding(4, 6, 4, 6);
             btnGoToDashboard.MouseState = MaterialSkin.MouseState.HOVER;
             btnGoToDashboard.Name = "btnGoToDashboard";
             btnGoToDashboard.NoAccentTextColor = Color.Empty;
-            btnGoToDashboard.Size = new Size(250, 63);
+            btnGoToDashboard.Size = new Size(265, 74);
             btnGoToDashboard.TabIndex = 8;
             btnGoToDashboard.Text = "前往後臺";
             btnGoToDashboard.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -479,12 +479,12 @@
             btnInstallMultipass.Dock = DockStyle.Fill;
             btnInstallMultipass.HighEmphasis = true;
             btnInstallMultipass.Icon = null;
-            btnInstallMultipass.Location = new Point(4, 246);
+            btnInstallMultipass.Location = new Point(4, 280);
             btnInstallMultipass.Margin = new Padding(4, 6, 4, 6);
             btnInstallMultipass.MouseState = MaterialSkin.MouseState.HOVER;
             btnInstallMultipass.Name = "btnInstallMultipass";
             btnInstallMultipass.NoAccentTextColor = Color.Empty;
-            btnInstallMultipass.Size = new Size(250, 63);
+            btnInstallMultipass.Size = new Size(265, 74);
             btnInstallMultipass.TabIndex = 7;
             btnInstallMultipass.Text = "安裝Multipass";
             btnInstallMultipass.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -501,12 +501,12 @@
             btnInstall.Dock = DockStyle.Fill;
             btnInstall.HighEmphasis = true;
             btnInstall.Icon = null;
-            btnInstall.Location = new Point(4, 321);
+            btnInstall.Location = new Point(4, 366);
             btnInstall.Margin = new Padding(4, 6, 4, 6);
             btnInstall.MouseState = MaterialSkin.MouseState.HOVER;
             btnInstall.Name = "btnInstall";
             btnInstall.NoAccentTextColor = Color.Empty;
-            btnInstall.Size = new Size(250, 63);
+            btnInstall.Size = new Size(265, 74);
             btnInstall.TabIndex = 5;
             btnInstall.Text = "安裝服務";
             btnInstall.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -523,12 +523,12 @@
             btnInstallVM.Dock = DockStyle.Fill;
             btnInstallVM.HighEmphasis = true;
             btnInstallVM.Icon = null;
-            btnInstallVM.Location = new Point(4, 171);
+            btnInstallVM.Location = new Point(4, 194);
             btnInstallVM.Margin = new Padding(4, 6, 4, 6);
             btnInstallVM.MouseState = MaterialSkin.MouseState.HOVER;
             btnInstallVM.Name = "btnInstallVM";
             btnInstallVM.NoAccentTextColor = Color.Empty;
-            btnInstallVM.Size = new Size(250, 63);
+            btnInstallVM.Size = new Size(265, 74);
             btnInstallVM.TabIndex = 2;
             btnInstallVM.Text = "安裝VM";
             btnInstallVM.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -550,7 +550,7 @@
             tableLayoutPanel8.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
             tableLayoutPanel8.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
             tableLayoutPanel8.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel8.Size = new Size(252, 159);
+            tableLayoutPanel8.Size = new Size(267, 182);
             tableLayoutPanel8.TabIndex = 0;
             // 
             // btnStart1
@@ -562,12 +562,12 @@
             btnStart1.Dock = DockStyle.Fill;
             btnStart1.HighEmphasis = true;
             btnStart1.Icon = null;
-            btnStart1.Location = new Point(4, 112);
+            btnStart1.Location = new Point(4, 126);
             btnStart1.Margin = new Padding(4, 6, 4, 6);
             btnStart1.MouseState = MaterialSkin.MouseState.HOVER;
             btnStart1.Name = "btnStart1";
             btnStart1.NoAccentTextColor = Color.Empty;
-            btnStart1.Size = new Size(244, 41);
+            btnStart1.Size = new Size(259, 50);
             btnStart1.TabIndex = 7;
             btnStart1.Text = "直接啟動";
             btnStart1.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -584,12 +584,12 @@
             btnStart.Dock = DockStyle.Fill;
             btnStart.HighEmphasis = true;
             btnStart.Icon = null;
-            btnStart.Location = new Point(4, 59);
+            btnStart.Location = new Point(4, 66);
             btnStart.Margin = new Padding(4, 6, 4, 6);
             btnStart.MouseState = MaterialSkin.MouseState.HOVER;
             btnStart.Name = "btnStart";
             btnStart.NoAccentTextColor = Color.Empty;
-            btnStart.Size = new Size(244, 41);
+            btnStart.Size = new Size(259, 48);
             btnStart.TabIndex = 6;
             btnStart.Text = "啟動服務";
             btnStart.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -623,7 +623,7 @@
             lbServiceStatus.SelectionLength = 0;
             lbServiceStatus.SelectionStart = 0;
             lbServiceStatus.ShortcutsEnabled = true;
-            lbServiceStatus.Size = new Size(240, 48);
+            lbServiceStatus.Size = new Size(255, 48);
             lbServiceStatus.TabIndex = 3;
             lbServiceStatus.TabStop = false;
             lbServiceStatus.TextAlign = HorizontalAlignment.Left;
@@ -644,7 +644,7 @@
             tableLayoutPanel3.RowCount = 2;
             tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel3.Size = new Size(772, 180);
+            tableLayoutPanel3.Size = new Size(816, 206);
             tableLayoutPanel3.TabIndex = 1;
             // 
             // tableLayoutPanel5
@@ -655,12 +655,12 @@
             tableLayoutPanel5.Controls.Add(btnSaveKey, 1, 0);
             tableLayoutPanel5.Controls.Add(lbKey, 0, 0);
             tableLayoutPanel5.Dock = DockStyle.Fill;
-            tableLayoutPanel5.Location = new Point(0, 90);
+            tableLayoutPanel5.Location = new Point(0, 103);
             tableLayoutPanel5.Margin = new Padding(0);
             tableLayoutPanel5.Name = "tableLayoutPanel5";
             tableLayoutPanel5.RowCount = 1;
             tableLayoutPanel5.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanel5.Size = new Size(772, 90);
+            tableLayoutPanel5.Size = new Size(816, 103);
             tableLayoutPanel5.TabIndex = 1;
             // 
             // btnSaveKey
@@ -672,12 +672,12 @@
             btnSaveKey.Dock = DockStyle.Fill;
             btnSaveKey.HighEmphasis = true;
             btnSaveKey.Icon = null;
-            btnSaveKey.Location = new Point(621, 6);
+            btnSaveKey.Location = new Point(656, 6);
             btnSaveKey.Margin = new Padding(4, 6, 4, 6);
             btnSaveKey.MouseState = MaterialSkin.MouseState.HOVER;
             btnSaveKey.Name = "btnSaveKey";
             btnSaveKey.NoAccentTextColor = Color.Empty;
-            btnSaveKey.Size = new Size(147, 78);
+            btnSaveKey.Size = new Size(156, 91);
             btnSaveKey.TabIndex = 7;
             btnSaveKey.Text = "儲存";
             btnSaveKey.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -711,7 +711,7 @@
             lbKey.SelectionLength = 0;
             lbKey.SelectionStart = 0;
             lbKey.ShortcutsEnabled = true;
-            lbKey.Size = new Size(605, 48);
+            lbKey.Size = new Size(640, 48);
             lbKey.TabIndex = 1;
             lbKey.TabStop = false;
             lbKey.TextAlign = HorizontalAlignment.Left;
@@ -731,7 +731,7 @@
             tableLayoutPanel4.Name = "tableLayoutPanel4";
             tableLayoutPanel4.RowCount = 1;
             tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanel4.Size = new Size(772, 90);
+            tableLayoutPanel4.Size = new Size(816, 103);
             tableLayoutPanel4.TabIndex = 0;
             // 
             // lbDataDir
@@ -760,7 +760,7 @@
             lbDataDir.SelectionLength = 0;
             lbDataDir.SelectionStart = 0;
             lbDataDir.ShortcutsEnabled = true;
-            lbDataDir.Size = new Size(605, 48);
+            lbDataDir.Size = new Size(640, 48);
             lbDataDir.TabIndex = 0;
             lbDataDir.TabStop = false;
             lbDataDir.TextAlign = HorizontalAlignment.Left;
@@ -777,12 +777,12 @@
             btnSelectDir.Dock = DockStyle.Fill;
             btnSelectDir.HighEmphasis = true;
             btnSelectDir.Icon = null;
-            btnSelectDir.Location = new Point(621, 6);
+            btnSelectDir.Location = new Point(656, 6);
             btnSelectDir.Margin = new Padding(4, 6, 4, 6);
             btnSelectDir.MouseState = MaterialSkin.MouseState.HOVER;
             btnSelectDir.Name = "btnSelectDir";
             btnSelectDir.NoAccentTextColor = Color.Empty;
-            btnSelectDir.Size = new Size(147, 78);
+            btnSelectDir.Size = new Size(156, 91);
             btnSelectDir.TabIndex = 1;
             btnSelectDir.Text = "選擇路徑";
             btnSelectDir.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -800,7 +800,7 @@
             // 
             AutoScaleDimensions = new SizeF(9F, 19F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(792, 828);
+            ClientSize = new Size(836, 930);
             Controls.Add(materialTabControl1);
             FormBorderStyle = FormBorderStyle.Fixed3D;
             Name = "Form1";

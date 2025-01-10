@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Management;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace Aron.Titan.Agent.Windows
 {
@@ -746,7 +747,7 @@ namespace Aron.Titan.Agent.Windows
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -NoExit -Command \"{command}\"",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -NoExit -Command {command}",
                 UseShellExecute = false,
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
