@@ -699,7 +699,7 @@ namespace Aron.Titan.Agent.Windows
         {
             try
             {
-                if(Directory.Exists(_config.DataDir))
+                if (Directory.Exists(_config.DataDir))
                 {
                     // open explorer
                     Process.Start("explorer.exe", _config.DataDir);
@@ -710,6 +710,30 @@ namespace Aron.Titan.Agent.Windows
             {
                 MaterialMessageBox.Show(ex.Message, Text);
             }
+        }
+
+        private void btnStart1_Click(object sender, EventArgs e)
+        {
+            // 使用 PowerShell 來啟動應用程式
+            string command = $"& \"${{env:ProgramFiles}}\\TitanNetwork\\Agent\\agent.exe\" --working-dir=\"${{env:TITAN_AGENT_WORKING_DIR}}\" --server-url=\"${{env:TITAN_AGENT_SERVER_URL}}\" --key=\"${{env:TITAN_AGENT_KEY}}\"";
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -NoExit -Command \"{command}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
+                CreateNoWindow = false,
+                WorkingDirectory = programPath
+            };
+
+            using (Process process = new Process())
+            {
+                process.StartInfo = startInfo;
+                process.Start();
+            }
+
+
         }
     }
 
