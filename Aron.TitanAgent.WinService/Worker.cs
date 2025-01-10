@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Management;
 using System.Runtime.InteropServices;
 
 namespace Aron.TitanAgent.WinService;
@@ -57,61 +58,16 @@ public class Worker : BackgroundService
                             FileName = exePath,
                             Arguments = arguments,
                             UseShellExecute = false,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
+                            RedirectStandardOutput = false,
+                            RedirectStandardError = false,
                             CreateNoWindow = false,
                             WorkingDirectory = programPath,
                         };
 
                         process = new Process();
-                        process.OutputDataReceived += (sender, e) =>
-                        {
-                            if (!string.IsNullOrEmpty(e.Data))
-                            {
-                                _logger.LogInformation(e.Data);
-                            }
-                        };
-
-                        process.ErrorDataReceived += (sender, e) =>
-                        {
-                            if (!string.IsNullOrEmpty(e.Data))
-                            {
-
-                                if (stdOutError == null)
-                                {
-                                    _logger.LogError(e.Data);
-                                    errorLogs.Add(new ErrorRecord() { Message = e.Data, Time = DateTime.Now });
-
-                                    // 檢查重複錯誤，3秒內超過5次，寫入stdOutError
-                                    // group by 3秒內的錯誤
-                                    var group = errorLogs
-                                        .Where(x => x.Time >= DateTime.Now.AddSeconds(-3))
-                                        .GroupBy(x => x.Message);
-                                    foreach (var item in group)
-                                    {
-                                        if (item.Count() > 5)
-                                        {
-                                            stdOutError = item.First().Message;
-                                            errorLogs.Clear();
-                                            break;
-                                        }
-                                    }
-                                    errorLogs.RemoveAll(x => x.Time < DateTime.Now.AddSeconds(-3));
-                                }
-                                else
-                                {
-                                    if (e.Data != stdOutError)
-                                    {
-                                        _logger.LogError(e.Data);
-                                    }
-                                }
-                            }
-                        };
+                        
                         process.StartInfo = startInfo;
                         process.Start();
-
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
 
                         using (EventLog eventLog = new EventLog("Application"))
                         {
@@ -141,12 +97,7 @@ public class Worker : BackgroundService
                 }
                 finally
                 {
-                    if (process != null)
-                    {
-                        process.Kill();
-                        process.Dispose();
-                        process = null;
-                    }
+                    CloseProcess();
                 }
             }
         }
@@ -154,20 +105,55 @@ public class Worker : BackgroundService
 
     }
 
+    private static int GetParentProcessId(int processId)
+    {
+        var query = $"SELECT ParentProcessId FROM Win32_Process WHERE ProcessId = {processId}";
+        var searcher = new ManagementObjectSearcher(query);
+        var queryCollection = searcher.Get();
+
+        foreach (var process in queryCollection)
+        {
+            return Convert.ToInt32(process["ParentProcessId"]);
+        }
+
+        return -1; // 無法找到父進程
+    }
+
     public override async Task StopAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Service is stopping. Performing cleanup...");
 
         // 在這裡添加清理邏輯，例如釋放資源
-        if (process != null)
-        {
-            process.Kill();
-            process.Dispose();
-            process = null;
-        }
+        CloseProcess();
 
         await Task.CompletedTask;
 
         _logger.LogInformation("Service cleanup completed.");
+    }
+
+    private void CloseProcess()
+    {
+        if (process != null)
+        {
+            var processes = Process.GetProcesses();
+            var childProcesses = processes.Where(p => GetParentProcessId(p.Id) == process.Id);
+
+            foreach (var p in childProcesses)
+            {
+                try
+                {
+                    p.Kill();
+                    p.Dispose();
+                }
+                catch
+                {
+
+                }
+
+            }
+            process.Kill();
+            process.Dispose();
+            process = null;
+        }
     }
 }
