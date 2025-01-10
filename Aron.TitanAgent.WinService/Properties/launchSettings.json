@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Aron.TitanAgent.WinService": {
+      "commandName": "Project",
+      "commandLineArgs": " --start-service ",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}
