@@ -9,13 +9,18 @@ namespace Aron.Titan.Agent.Windows
 {
     public class ServiceUtilities
     {
-        public string EXE { get; set; }
-        public string ServiceName { get; set; }
-        public string Discriptions { get; set; }
-        public ServiceUtilities(string exe, string serviceName, string discriptions)
+        private string Args { get; }
+        public string DisplayName { get; }
+
+        public string EXE { get; }
+        public string ServiceName { get; }
+        public string Discriptions { get; }
+        public ServiceUtilities(string exe, string serviceName, string args, string displayName, string discriptions)
         {
             EXE = exe;
             ServiceName = serviceName;
+            this.Args = args;
+            this.DisplayName = displayName;
             Discriptions = discriptions;
         }
         public bool IsInstalledService()
@@ -66,24 +71,27 @@ namespace Aron.Titan.Agent.Windows
             }
         }
 
-        public void InstallService()
+        public string InstallService()
         {
             try
             {
+                string output = "";
                 using (var process = new Process())
                 {
                     var startInfo = new ProcessStartInfo
                     {
                         FileName = "sc",
-                        Arguments = $"create \"{ServiceName}\" binPath= \"\\\"{EXE}\\\" --working-dir=%TITAN_AGENT_WORKING_DIR% --server-url=%TITAN_AGENT_SERVER_URL% --key=%TITAN_AGENT_KEY%\" start= auto",
+                        Arguments = $"create \"{ServiceName}\" binPath= \"\\\"{EXE}\\\" {Args} \" start= auto DisplayName= \"{(string.IsNullOrEmpty(DisplayName) ? ServiceName : DisplayName)}\"",
                         UseShellExecute = false,
-                        RedirectStandardOutput = false,
-                        RedirectStandardError = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
                         CreateNoWindow = true
                     };
                     process.StartInfo = startInfo;
                     process.Start();
                     process.WaitForExit();
+                    output = process.StandardOutput.ReadToEnd();
+                    output += "\r\n\r\n" + process.StandardError.ReadToEnd();
                 }
 
                 using (var process = new Process())
@@ -93,14 +101,17 @@ namespace Aron.Titan.Agent.Windows
                         FileName = "sc",
                         Arguments = $"description \"{ServiceName}\" \"{Discriptions}\"",
                         UseShellExecute = false,
-                        RedirectStandardOutput = false,
-                        RedirectStandardError = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
                         CreateNoWindow = true
                     };
                     process.StartInfo = startInfo;
                     process.Start();
                     process.WaitForExit();
                 }
+
+                return output;
+
             }
             catch (Exception ex)
             {
@@ -163,7 +174,7 @@ namespace Aron.Titan.Agent.Windows
 
         }
 
-        public void UninstallService()
+        public string UninstallService()
         {
             try
             {
@@ -171,8 +182,8 @@ namespace Aron.Titan.Agent.Windows
                 startInfo.FileName = "sc";
                 startInfo.Arguments = $"stop \"{ServiceName}\"";
                 startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = false;
-                startInfo.RedirectStandardError = false;
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
                 startInfo.CreateNoWindow = true;
                 Process process = new Process();
                 process.StartInfo = startInfo;
@@ -184,6 +195,10 @@ namespace Aron.Titan.Agent.Windows
                 startInfo.Arguments = $"delete \"{ServiceName}\"";
                 process.StartInfo = startInfo;
                 process.Start();
+                process.WaitForExit();
+                string output = process.StandardOutput.ReadToEnd();
+                output += "\r\n\r\n" + process.StandardError.ReadToEnd();
+                return output;
             }
             catch (Exception ex)
             {

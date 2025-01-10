@@ -1,14 +1,11 @@
 using Hardware.Info;
 using MaterialSkin;
 using MaterialSkin.Controls;
-using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.VisualBasic.Devices;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Compression;
 using System.Management;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace Aron.Titan.Agent.Windows
 {
@@ -26,6 +23,40 @@ namespace Aron.Titan.Agent.Windows
         private ServiceUtilities serviceUtilities;
         private string programPath, exePath;
 
+        public bool NeedUpdate
+        {
+            get
+            {
+                if (AppVersion == null || LastAppVersion == null)
+                {
+                    return false;
+                }
+                // 判斷 AppVersion 是否小於 LastAppVersion
+                string[] appVersion = AppVersion.Split('.');
+                string[] lastAppVersion = LastAppVersion.Split('.');
+
+                if (appVersion.Length != lastAppVersion.Length)
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < appVersion.Length; i++)
+                {
+
+                    if (int.Parse(appVersion[i]) > int.Parse(lastAppVersion[i]))
+                    {
+                        return false;
+                    }
+                }
+                if (int.Parse(appVersion[appVersion.Length - 1]) == int.Parse(lastAppVersion[appVersion.Length - 1]))
+                    return false;
+                return true;
+
+            }
+        }
+
+        public string? AppVersion { get; private set; }
+        public string? LastAppVersion { get; private set; }
 
         public Form1(IServiceProvider serviceProvider, Config.Config config) : base()
         {
@@ -42,7 +73,13 @@ namespace Aron.Titan.Agent.Windows
             programPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TitanNetwork", "Agent");
             exePath = Path.Combine(programPath, "agent.exe");
 
-            serviceUtilities = new ServiceUtilities(exePath, "Aron Titan Agent", "Titan Agent Service - By.Aron");
+
+            string targetExe = Path.Combine(programPath, "Aron.TitanAgent.WinService.exe");
+
+            serviceUtilities = new ServiceUtilities(targetExe, "AronTitanAgent", "--start-service", "Aron Titan Agent", "Titan Agent Service - By.Aron");
+
+            
+            
 
         }
 
@@ -90,6 +127,75 @@ namespace Aron.Titan.Agent.Windows
                 }
             }, ct);
 
+            try
+            {
+                string csprojUrl = "https://raw.githubusercontent.com/aron-666/Aron.Titan.Agent.Windows/master/Aron.Titan.Agent.Windows/Aron.Titan.Agent.Windows.csproj";
+                AppVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                var latestVersion = new HttpClient() 
+                { 
+                    Timeout = TimeSpan.FromSeconds(10) 
+                }
+                    .GetStringAsync(csprojUrl).GetAwaiter().GetResult();
+
+                LastAppVersion = parseVersion(latestVersion);
+
+                if (NeedUpdate)
+                {
+                    var res = MaterialMessageBox.Show($"有新版本！ 目前版本: {AppVersion}, 最新版本: {LastAppVersion}，請前往更新。", Text, messageBoxButtons: MessageBoxButtons.YesNo);
+
+                    if (res == DialogResult.Yes)
+                    {
+                        // get RepositoryUrl from csproj
+                        string repositoryUrl = "https://github.com/aron-666/Aron.Titan.Agent.Windows";
+                        var psi = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = repositoryUrl,
+                            UseShellExecute = true
+                        };
+                        System.Diagnostics.Process.Start(psi);
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MaterialMessageBox.Show(ex.Message, Text);
+            }
+        }
+
+        private string parseVersion(string xml)
+        {
+            try
+            {
+                // 載入 XML 檔案
+                XDocument doc = XDocument.Parse(xml);
+
+                // 找到 PropertyGroup 元素
+                XElement propertyGroup = doc.Descendants("PropertyGroup").FirstOrDefault();
+
+                if (propertyGroup != null)
+                {
+                    // 找到 AssemblyVersion 元素
+                    XElement assemblyVersionElement = propertyGroup.Element("AssemblyVersion");
+
+                    if (assemblyVersionElement != null)
+                    {
+                        // 取得 AssemblyVersion 的值
+                        string assemblyVersion = assemblyVersionElement.Value;
+                        return assemblyVersion;
+                    }
+                    else
+                    {
+                    }
+                }
+                else
+                {
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return null;
         }
 
         private void SetEnvironmentVariables()
@@ -186,7 +292,9 @@ namespace Aron.Titan.Agent.Windows
                     // yes no message box
                     if (MaterialMessageBox.Show("是否卸載？", Text, messageBoxButtons: MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        serviceUtilities.UninstallService();
+                        string res = serviceUtilities.UninstallService();
+
+                        MaterialMessageBox.Show(res, Text);
                     }
                 }
                 else
@@ -214,12 +322,18 @@ namespace Aron.Titan.Agent.Windows
                     // unzip agent-windows.zip
                     ZipFile.ExtractToDirectory(agentZip, programPath, true);
 
-                    serviceUtilities.InstallService();
 
                     // delete agent-windows.zip
                     System.IO.File.Delete(agentZip);
 
-                    MaterialMessageBox.Show("安裝成功", Text);
+                    // copy current exe to %ProgramFiles%\TitanNetwork\Agent
+                    string currentExe = Path.Combine(Directory.GetCurrentDirectory(), "Service", "Aron.TitanAgent.WinService.exe");
+                    string targetExe = Path.Combine(programPath, Path.GetFileName(currentExe));
+                    System.IO.File.Copy(currentExe, targetExe, true);
+
+                    string res = serviceUtilities.InstallService();
+
+                    MaterialMessageBox.Show(res, Text);
                 }
             }
             catch (Exception ex)
@@ -230,7 +344,7 @@ namespace Aron.Titan.Agent.Windows
             {
                 Task.Run(async () =>
                 {
-                    await Task.Delay(10000);
+                    await Task.Delay(5000);
 
                     button.Invoke(new Action(() =>
                     {
@@ -593,23 +707,45 @@ namespace Aron.Titan.Agent.Windows
                 return;
             }
 
-            if (envInfo.WinVersion == WinVersion.Windows10Pro)
+            var button = (MaterialButton)sender;
+            button.Enabled = false;
+            try
             {
-                // 詢問 安裝 Hyper-V 或 VirtualBox
-                if (MaterialMessageBox.Show("安裝Hyper-V 或 VirtualBox?\r\nYes: 安裝Hyper-V\r\nNo: 安裝 VirtualBox ", Text, messageBoxButtons: MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
+                if (envInfo.WinVersion == WinVersion.Windows10Pro)
                 {
-                    MaterialMessageBox.Show("請手動開啟Hyper-V", Text);
-                    Process.Start("optionalfeatures");
+                    // 詢問 安裝 Hyper-V 或 VirtualBox
+                    var res = MaterialMessageBox.Show("安裝Hyper-V 或 VirtualBox?\r\nYes: 安裝Hyper-V\r\nNo: 安裝 VirtualBox ", Text, messageBoxButtons: MessageBoxButtons.YesNoCancel);
+                    if (res == DialogResult.Yes)
+                    {
+                        MaterialMessageBox.Show("請手動開啟Hyper-V", Text);
+                        Process.Start("optionalfeatures");
+                    }
+                    else if(res == DialogResult.No)
+                    {
+                        InstallVirtualBox();
+                    }
                 }
                 else
                 {
                     InstallVirtualBox();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                InstallVirtualBox();
+                MaterialMessageBox.Show(ex.Message, Text);
             }
+            finally
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    button.Invoke(new Action(() =>
+                    {
+                        button.Enabled = true;
+                    }));
+                });
+            }
+            
         }
 
         private void InstallVirtualBox()
@@ -669,30 +805,49 @@ namespace Aron.Titan.Agent.Windows
                 return;
             }
 
-            // 安裝 Multipass
-            // https://nextcloud.aronhome.com/apps/sharingpath/Aron/public/multipass-win64.msi
-            string tempDir = Path.Combine(Directory.GetCurrentDirectory(), "temp");
-            if (!Directory.Exists(tempDir))
+            var button = (MaterialButton)sender;
+            button.Enabled = false;
+            try
             {
-                Directory.CreateDirectory(tempDir);
-            }
+                // 安裝 Multipass
+                // https://nextcloud.aronhome.com/apps/sharingpath/Aron/public/multipass-win64.msi
+                string tempDir = Path.Combine(Directory.GetCurrentDirectory(), "temp");
+                if (!Directory.Exists(tempDir))
+                {
+                    Directory.CreateDirectory(tempDir);
+                }
 
-            string multipassmsi = Path.Combine(tempDir, "multipass.msi");
-            HttpClient client = new HttpClient();
-            var resp = client.GetAsync("https://nextcloud.aronhome.com/apps/sharingpath/Aron/public/multipass-win64.msi").GetAwaiter().GetResult();
-            using (var fs = new FileStream(
-                multipassmsi,
-                FileMode.Create, // 使用 FileMode.Create 來覆蓋已存在的檔案
-                FileAccess.Write,
-                FileShare.None))
+                string multipassmsi = Path.Combine(tempDir, "multipass.msi");
+                HttpClient client = new HttpClient();
+                var resp = client.GetAsync("https://nextcloud.aronhome.com/apps/sharingpath/Aron/public/multipass-win64.msi").GetAwaiter().GetResult();
+                using (var fs = new FileStream(
+                    multipassmsi,
+                    FileMode.Create, // 使用 FileMode.Create 來覆蓋已存在的檔案
+                    FileAccess.Write,
+                    FileShare.None))
+                {
+                    resp.Content.CopyToAsync(fs).GetAwaiter().GetResult();
+                }
+
+                Process process = Process.Start("msiexec", $"/i \"{multipassmsi}\"");
+                process.WaitForExit();
+                Directory.Delete(tempDir, true);
+            }
+            catch (Exception ex)
             {
-                resp.Content.CopyToAsync(fs).GetAwaiter().GetResult();
+                MaterialMessageBox.Show(ex.Message, Text);
             }
-
-            Process process = Process.Start("msiexec", $"/i \"{multipassmsi}\"");
-            process.WaitForExit();
-            Directory.Delete(tempDir, true);
-
+            finally
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    button.Invoke(new Action(() =>
+                    {
+                        button.Enabled = true;
+                    }));
+                });
+            }
 
         }
 
@@ -703,7 +858,12 @@ namespace Aron.Titan.Agent.Windows
                 if (Directory.Exists(_config.DataDir))
                 {
                     // open explorer
+                    
                     Process.Start("explorer.exe", _config.DataDir);
+                }
+                else
+                {
+                    MaterialMessageBox.Show("目錄不存在", Text);
                 }
 
             }
@@ -715,53 +875,91 @@ namespace Aron.Titan.Agent.Windows
 
         private void btnStart1_Click(object sender, EventArgs e)
         {
-            if(!File.Exists(exePath))
+            if (envInfo == null)
             {
-                if (!System.IO.Directory.Exists(programPath))
-                {
-                    System.IO.Directory.CreateDirectory(programPath);
-                }
-
-                // download agent.exe from https://pcdn.titannet.io/test4/bin/agent-windows.zip
-                string agentZip = Path.Combine(programPath, "agent-windows.zip");
-                HttpClient client = new HttpClient();
-                var resp = client.GetAsync("https://pcdn.titannet.io/test4/bin/agent-windows.zip").GetAwaiter().GetResult();
-                using (var fs = new FileStream(
-                    agentZip,
-                    FileMode.Create, // 使用 FileMode.Create 來覆蓋已存在的檔案
-                    FileAccess.Write,
-                    FileShare.None))
-                {
-                    resp.Content.CopyToAsync(fs).GetAwaiter().GetResult();
-                }
-
-                // unzip agent-windows.zip
-                ZipFile.ExtractToDirectory(agentZip, programPath, true);
-
-                // delete agent-windows.zip
-                System.IO.File.Delete(agentZip);
-
-            }
-            // 使用 PowerShell 來啟動應用程式
-            string command = $"& \"${{env:ProgramFiles}}\\TitanNetwork\\Agent\\agent.exe\" --working-dir=\"${{env:TITAN_AGENT_WORKING_DIR}}\" --server-url=\"${{env:TITAN_AGENT_SERVER_URL}}\" --key=\"${{env:TITAN_AGENT_KEY}}\"";
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -NoExit -Command {command}",
-                UseShellExecute = false,
-                RedirectStandardOutput = false,
-                RedirectStandardError = false,
-                CreateNoWindow = false,
-                WorkingDirectory = programPath
-            };
-
-            using (Process process = new Process())
-            {
-                process.StartInfo = startInfo;
-                process.Start();
+                MaterialMessageBox.Show("請等待環境資訊更新", Text);
+                return;
             }
 
+            var button = (MaterialButton)sender;
+            button.Enabled = false;
+            try
+            {
+                if (!File.Exists(exePath))
+                {
+                    if (!System.IO.Directory.Exists(programPath))
+                    {
+                        System.IO.Directory.CreateDirectory(programPath);
+                    }
 
+                    // download agent.exe from https://pcdn.titannet.io/test4/bin/agent-windows.zip
+                    string agentZip = Path.Combine(programPath, "agent-windows.zip");
+                    HttpClient client = new HttpClient();
+                    var resp = client.GetAsync("https://pcdn.titannet.io/test4/bin/agent-windows.zip").GetAwaiter().GetResult();
+                    using (var fs = new FileStream(
+                        agentZip,
+                        FileMode.Create, // 使用 FileMode.Create 來覆蓋已存在的檔案
+                        FileAccess.Write,
+                        FileShare.None))
+                    {
+                        resp.Content.CopyToAsync(fs).GetAwaiter().GetResult();
+                    }
+
+                    // unzip agent-windows.zip
+                    ZipFile.ExtractToDirectory(agentZip, programPath, true);
+
+                    // delete agent-windows.zip
+                    System.IO.File.Delete(agentZip);
+
+                }
+                string command = $"& \"${{env:ProgramFiles}}\\TitanNetwork\\Agent\\agent.exe\" --working-dir=\"${{env:TITAN_AGENT_WORKING_DIR}}\" --server-url=\"${{env:TITAN_AGENT_SERVER_URL}}\" --key=\"${{env:TITAN_AGENT_KEY}}\"";
+
+                string? workingDir = Environment.GetEnvironmentVariable("TITAN_AGENT_WORKING_DIR", EnvironmentVariableTarget.Machine);
+                string? serverUrl = Environment.GetEnvironmentVariable("TITAN_AGENT_SERVER_URL", EnvironmentVariableTarget.Machine);
+                string? key = Environment.GetEnvironmentVariable("TITAN_AGENT_KEY", EnvironmentVariableTarget.Machine);
+                string? logFile = Environment.GetEnvironmentVariable("LOG_FILE", EnvironmentVariableTarget.Machine);
+
+                if (string.IsNullOrEmpty(workingDir) || string.IsNullOrEmpty(serverUrl) || string.IsNullOrEmpty(key))
+                {
+                    MaterialMessageBox.Show("請先設定環境變數", Text);
+                    return;
+                }
+
+                string arguments = $" --working-dir=\"{workingDir}\" --server-url=\"{serverUrl}\" --key=\"{key}\"";
+
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false,
+                    CreateNoWindow = false,
+                    WorkingDirectory = programPath,
+
+                };
+                startInfo.EnvironmentVariables["LOG_FILE"] = logFile;
+                using (Process process = new Process())
+                {
+                    process.StartInfo = startInfo;
+                    process.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                MaterialMessageBox.Show(ex.Message, Text);
+            }
+            finally
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    button.Invoke(new Action(() =>
+                    {
+                        button.Enabled = true;
+                    }));
+                });
+            }
         }
     }
 
