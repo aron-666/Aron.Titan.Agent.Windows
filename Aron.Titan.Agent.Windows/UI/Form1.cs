@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace Aron.Titan.Agent.Windows
 {
-    public partial class Form1 : MaterialSkin.Controls.MaterialForm
+    public partial class Form1 : MaterialForm
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly Config.Config _config;
@@ -32,7 +32,7 @@ namespace Aron.Titan.Agent.Windows
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
-            materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+            //materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
             _serviceProvider = serviceProvider;
             this._config = config;
 
@@ -714,6 +714,33 @@ namespace Aron.Titan.Agent.Windows
 
         private void btnStart1_Click(object sender, EventArgs e)
         {
+            if(!File.Exists(exePath))
+            {
+                if (!System.IO.Directory.Exists(programPath))
+                {
+                    System.IO.Directory.CreateDirectory(programPath);
+                }
+
+                // download agent.exe from https://pcdn.titannet.io/test4/bin/agent-windows.zip
+                string agentZip = Path.Combine(programPath, "agent-windows.zip");
+                HttpClient client = new HttpClient();
+                var resp = client.GetAsync("https://pcdn.titannet.io/test4/bin/agent-windows.zip").GetAwaiter().GetResult();
+                using (var fs = new FileStream(
+                    agentZip,
+                    FileMode.Create, // 使用 FileMode.Create 來覆蓋已存在的檔案
+                    FileAccess.Write,
+                    FileShare.None))
+                {
+                    resp.Content.CopyToAsync(fs).GetAwaiter().GetResult();
+                }
+
+                // unzip agent-windows.zip
+                ZipFile.ExtractToDirectory(agentZip, programPath, true);
+
+                // delete agent-windows.zip
+                System.IO.File.Delete(agentZip);
+
+            }
             // 使用 PowerShell 來啟動應用程式
             string command = $"& \"${{env:ProgramFiles}}\\TitanNetwork\\Agent\\agent.exe\" --working-dir=\"${{env:TITAN_AGENT_WORKING_DIR}}\" --server-url=\"${{env:TITAN_AGENT_SERVER_URL}}\" --key=\"${{env:TITAN_AGENT_KEY}}\"";
             ProcessStartInfo startInfo = new ProcessStartInfo
