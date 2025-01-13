@@ -5,6 +5,7 @@ using Microsoft.VisualBasic.Devices;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Management;
+using System.Text;
 using System.Xml.Linq;
 
 namespace Aron.Titan.Agent.Windows
@@ -18,10 +19,13 @@ namespace Aron.Titan.Agent.Windows
         private PerformanceCounter? cpuCounter;
 
         private Task InfoUpdater;
+        CancellationTokenSource testCts = new CancellationTokenSource();
+        private Task TestTask;
         private CancellationTokenSource cts = new CancellationTokenSource();
         private CancellationToken ct;
         private ServiceUtilities serviceUtilities;
         private string programPath, exePath;
+
 
         public bool NeedUpdate
         {
@@ -78,8 +82,8 @@ namespace Aron.Titan.Agent.Windows
 
             serviceUtilities = new ServiceUtilities(targetExe, "AronTitanAgent", "--start-service", "Aron Titan Agent", "Titan Agent Service - By.Aron");
 
-            
-            
+
+
 
         }
 
@@ -131,9 +135,9 @@ namespace Aron.Titan.Agent.Windows
             {
                 string csprojUrl = "https://raw.githubusercontent.com/aron-666/Aron.Titan.Agent.Windows/master/Aron.Titan.Agent.Windows/Aron.Titan.Agent.Windows.csproj";
                 AppVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
-                var latestVersion = new HttpClient() 
-                { 
-                    Timeout = TimeSpan.FromSeconds(10) 
+                var latestVersion = new HttpClient()
+                {
+                    Timeout = TimeSpan.FromSeconds(10)
                 }
                     .GetStringAsync(csprojUrl).GetAwaiter().GetResult();
 
@@ -241,6 +245,86 @@ namespace Aron.Titan.Agent.Windows
                 }
             }
 
+            string multipassPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Multipass", "bin");
+            if (Directory.Exists(multipassPath))
+            {
+                string paths = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.Machine) ?? "";
+                if (!paths.Contains(multipassPath))
+                {
+                    Environment.SetEnvironmentVariable("Path", $"{multipassPath};{paths}", EnvironmentVariableTarget.Machine);
+
+
+
+                }
+
+                // 檢查 multipass local dirver 是否設定正確
+                // 查看是否在 UI 執行續
+                if (!InvokeRequired)
+                {
+                    string currentDriver = GetMultipassDriver().Trim().ToLower();
+                    bool isHyperVEnabled = IsHyperVFeatureEnabled();
+                    bool isVirtualBoxInstalled = IsSoftwareInstalled("VirtualBox");
+                    // 查看是否安裝 hyperv
+                    if (isHyperVEnabled)
+                    {
+                        if (currentDriver != "hyperv")
+                        {
+                            var res = MaterialMessageBox.Show($"檢測到您安裝的是 hyperv，但 Multipass 設定是 {currentDriver}，\r\n是否自動修正?", Text, messageBoxButtons: MessageBoxButtons.YesNo);
+
+                            if (res == DialogResult.Yes)
+                            {
+                                SetMultipassDriver("hyperv");
+                            }
+                        }
+                    }
+                    else if (isVirtualBoxInstalled)
+                    {
+                        if (currentDriver != "virtualbox")
+                        {
+                            var res = MaterialMessageBox.Show($"檢測到您安裝的是 VirtualBox，但 Multipass 設定是 {currentDriver}，\r\n是否自動修正?", Text, messageBoxButtons: MessageBoxButtons.YesNo);
+
+                            if (res == DialogResult.Yes)
+                            {
+                                SetMultipassDriver("virtualbox");
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        }
+
+        private string GetMultipassDriver()
+        {
+            string command = "multipass get local.driver";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = $"/c {command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+                return output;
+            }
+        }
+
+        private void SetMultipassDriver(string driver)
+        {
+            string command = $"multipass set local.driver={driver}";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = $"/c {command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                process.WaitForExit();
+            }
         }
         private void btnInstall_Click(object sender, System.EventArgs e)
         {
@@ -332,6 +416,7 @@ namespace Aron.Titan.Agent.Windows
                     System.IO.File.Copy(currentExe, targetExe, true);
 
                     string res = serviceUtilities.InstallService();
+                    SetMultipassPassphrase(Convert.ToBase64String(Encoding.UTF8.GetBytes(_config.Key ?? "abc")));
 
                     MaterialMessageBox.Show(res, Text);
                 }
@@ -432,6 +517,7 @@ namespace Aron.Titan.Agent.Windows
 
             float? cpuUsage = cpuCounter?.NextValue();
 
+
             return new EnvInfo
             {
                 WinVersion = GetWinVersion(),
@@ -443,7 +529,8 @@ namespace Aron.Titan.Agent.Windows
                 AvailableDiskGB = (decimal)(driveInfo.AvailableFreeSpace / (decimal)(1024 * 1024 * 1024)),
                 IsCPUVirtualization = CPUVirtualization(),
                 CpuUsagePercentage = cpuUsage,
-                VMStatus = CheckVM()
+                VMStatus = CheckVM(),
+                VMCheck = IsVMRunning("ubuntu-niulink"),
             };
         }
 
@@ -460,6 +547,8 @@ namespace Aron.Titan.Agent.Windows
             lbDisk.Text = $"{envInfo.AvailableDiskGB?.ToString("F2")}/{envInfo.TotalDiskGB?.ToString("F2")}  ({envInfo.AvailableDiskGB / envInfo.TotalDiskGB * 100:F0}%)";
             lbVm.Text = envInfo.VMStatus ? "Yes" : "No";
             lbMultipassStatus.Text = CheckMultipass() ? "Yes" : "No";
+
+            lbVMCheck.Text = envInfo.VMCheck ? "Yes" : "No";
         }
 
         public bool CPUVirtualization()
@@ -681,6 +770,8 @@ namespace Aron.Titan.Agent.Windows
                 MaterialMessageBox.Show("請先輸入身分碼，並儲存", Text);
                 return;
             }
+
+            SetEnvironmentVariables();
             if (serviceUtilities.IsServiceRunning())
             {
                 string ret = serviceUtilities.StopService();
@@ -688,6 +779,7 @@ namespace Aron.Titan.Agent.Windows
             }
             else
             {
+                SetMultipassPassphrase(Convert.ToBase64String(Encoding.UTF8.GetBytes(_config.Key ?? "abc")));
                 string ret = serviceUtilities.StartService();
                 MaterialMessageBox.Show(ret, Text);
             }
@@ -720,7 +812,7 @@ namespace Aron.Titan.Agent.Windows
                         MaterialMessageBox.Show("請手動開啟Hyper-V", Text);
                         Process.Start("optionalfeatures");
                     }
-                    else if(res == DialogResult.No)
+                    else if (res == DialogResult.No)
                     {
                         InstallVirtualBox();
                     }
@@ -736,6 +828,7 @@ namespace Aron.Titan.Agent.Windows
             }
             finally
             {
+                SetEnvironmentVariables();
                 Task.Run(async () =>
                 {
                     await Task.Delay(5000);
@@ -745,7 +838,7 @@ namespace Aron.Titan.Agent.Windows
                     }));
                 });
             }
-            
+
         }
 
         private void InstallVirtualBox()
@@ -839,6 +932,7 @@ namespace Aron.Titan.Agent.Windows
             }
             finally
             {
+                SetEnvironmentVariables();
                 Task.Run(async () =>
                 {
                     await Task.Delay(5000);
@@ -858,7 +952,7 @@ namespace Aron.Titan.Agent.Windows
                 if (Directory.Exists(_config.DataDir))
                 {
                     // open explorer
-                    
+
                     Process.Start("explorer.exe", _config.DataDir);
                 }
                 else
@@ -880,6 +974,8 @@ namespace Aron.Titan.Agent.Windows
                 MaterialMessageBox.Show("請等待環境資訊更新", Text);
                 return;
             }
+
+            SetEnvironmentVariables();
 
             var button = (MaterialButton)sender;
             button.Enabled = false;
@@ -961,6 +1057,175 @@ namespace Aron.Titan.Agent.Windows
                 });
             }
         }
+
+        private void btnTest_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (TestTask != null && !TestTask.IsCompleted)
+                    throw new Exception("測試還在進行。");
+
+                MaterialMessageBox.Show("按下 Ok 後，測試開始，請等待片刻", Text);
+                testCts = new CancellationTokenSource();
+                CancellationToken ct = testCts.Token;
+                TestTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        // 在 multipass 建立 aron-test
+                        if(IsVMExist("aron-test"))
+                            RemoveVm("aron-test");
+
+                        if (!CreateVm("aron-test"))
+                        {
+                            throw new Exception("建立 VM 失敗");
+                        }
+
+                        // 刪除 aron-test
+                        RemoveVm("aron-test");
+
+                        if(InvokeRequired)
+                        {
+                            Invoke(new Action(() =>
+                            {
+                                MaterialMessageBox.Show("Multipass 測試成功", Text);
+                            }));
+                        }
+                        else
+                        {
+                            MaterialMessageBox.Show("Multipass 測試成功", Text);
+                        }
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        if(InvokeRequired)
+                        {
+                            Invoke(new Action(() =>
+                            {
+                                MaterialMessageBox.Show(ex.Message, Text);
+                            }));
+                        }
+                        else
+                        {
+                            MaterialMessageBox.Show(ex.Message, Text);
+                        }
+                    }
+                }, ct);
+            }
+            catch(Exception ex)
+            {
+                MaterialMessageBox.Show(ex.Message, Text);
+            }
+        }
+
+        private bool CreateVm(string name)
+        {
+            string command = $"multipass launch --name {name}";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = $"/c {command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+                return output.Contains("Launched");
+            }
+        }
+
+        private bool IsVMExist(string name)
+        {
+            string command = $"multipass list";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = $"/c {command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+                return output.Contains(name);
+            }
+        }
+
+        private bool IsVMRunning(string name)
+        {
+            string command = $"multipass list";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = $"/c {command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                while (!process.StandardOutput.EndOfStream)
+                {
+                    string line = process.StandardOutput.ReadLine();
+                    if (line.Contains(name) && line.Contains("Running"))
+                    {
+                        process.WaitForExit();
+
+                        return true;
+                    }
+                }
+                process.WaitForExit();
+                return false;
+            }
+        }
+
+        private void RemoveVm(string name)
+        {
+            string command = $"multipass delete --purge {name}";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = $"/c {command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+            }
+        }
+
+        private void SetMultipassPassphrase(string passphrase)
+        {
+            string command = " set local.passphrase";
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "multipass";
+                process.StartInfo.Arguments = $"{command}";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                process.StandardInput.WriteLine(passphrase);
+                process.StandardInput.WriteLine(passphrase);
+                process.WaitForExit();
+
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+                
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    MaterialMessageBox.Show(error, Text);
+                }
+
+
+            }
+        }
+
     }
 
     public enum WinVersion
@@ -984,6 +1249,8 @@ namespace Aron.Titan.Agent.Windows
         public float? CpuUsagePercentage { get; set; }
 
         public bool VMStatus { get; set; }
+
+        public bool VMCheck { get; set; }
 
     }
 }

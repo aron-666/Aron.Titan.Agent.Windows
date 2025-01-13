@@ -1,7 +1,9 @@
+using System.Buffers.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.Management;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Aron.TitanAgent.WinService;
 
@@ -10,6 +12,7 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly Settings settings;
     Process? process = null;
+    string? workingDir, serverUrl, key;
 
 
     public Worker(ILogger<Worker> logger, Settings settings)
@@ -32,9 +35,9 @@ public class Worker : BackgroundService
                 {
                     if (arg.Equals("--start-service", StringComparison.OrdinalIgnoreCase))
                     {
-                        string? workingDir = Environment.GetEnvironmentVariable("TITAN_AGENT_WORKING_DIR", EnvironmentVariableTarget.Machine);
-                        string? serverUrl = Environment.GetEnvironmentVariable("TITAN_AGENT_SERVER_URL", EnvironmentVariableTarget.Machine);
-                        string? key = Environment.GetEnvironmentVariable("TITAN_AGENT_KEY", EnvironmentVariableTarget.Machine);
+                        workingDir = Environment.GetEnvironmentVariable("TITAN_AGENT_WORKING_DIR", EnvironmentVariableTarget.Machine);
+                        serverUrl = Environment.GetEnvironmentVariable("TITAN_AGENT_SERVER_URL", EnvironmentVariableTarget.Machine);
+                        key = Environment.GetEnvironmentVariable("TITAN_AGENT_KEY", EnvironmentVariableTarget.Machine);
 
                         if (string.IsNullOrEmpty(workingDir) || string.IsNullOrEmpty(serverUrl) || string.IsNullOrEmpty(key))
                         {
@@ -52,22 +55,69 @@ public class Worker : BackgroundService
                         string programPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TitanNetwork", "Agent");
                         string exePath = Path.Combine(programPath, "agent.exe");
                         string arguments = $" --working-dir=\"{workingDir}\" --server-url=\"{serverUrl}\" --key=\"{key}\"";
+                        AuthMultipass();
 
                         ProcessStartInfo startInfo = new ProcessStartInfo
                         {
                             FileName = exePath,
                             Arguments = arguments,
                             UseShellExecute = false,
-                            RedirectStandardOutput = false,
-                            RedirectStandardError = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
                             CreateNoWindow = false,
                             WorkingDirectory = programPath,
                         };
 
                         process = new Process();
-                        
+
+                        process.OutputDataReceived += (sender, e) =>
+                        {
+                            if (!string.IsNullOrEmpty(e.Data))
+                            {
+                                _logger.LogInformation(e.Data);
+                            }
+                        };
+
+                        process.ErrorDataReceived += (sender, e) =>
+                        {
+                            if (!string.IsNullOrEmpty(e.Data))
+                            {
+
+                                if (stdOutError == null)
+                                {
+                                    _logger.LogError(e.Data);
+                                    errorLogs.Add(new ErrorRecord() { Message = e.Data, Time = DateTime.Now });
+
+                                    var group = errorLogs
+                                        .Where(x => x.Time >= DateTime.Now.AddSeconds(-3))
+                                        .GroupBy(x => x.Message);
+                                    foreach (var item in group)
+                                    {
+                                        if (item.Count() > 5)
+                                        {
+                                            stdOutError = item.First().Message;
+                                            errorLogs.Clear();
+                                            break;
+                                        }
+                                    }
+                                    errorLogs.RemoveAll(x => x.Time < DateTime.Now.AddSeconds(-3));
+                                }
+                                else
+                                {
+                                    if (e.Data != stdOutError)
+                                    {
+                                        _logger.LogError(e.Data);
+                                    }
+                                }
+                            }
+                        };
                         process.StartInfo = startInfo;
                         process.Start();
+
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+
+
 
                         using (EventLog eventLog = new EventLog("Application"))
                         {
@@ -105,6 +155,46 @@ public class Worker : BackgroundService
 
     }
 
+    private void AuthMultipass()
+    {
+        try
+        {
+            
+            string base64Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(key ?? "abc"));
+
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "multipass",
+                Arguments = " auth " + base64Key,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDir,
+            };
+            Process process = new Process();
+            process.StartInfo = startInfo;
+            process.Start();
+            process.WaitForExit();
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            if (!string.IsNullOrEmpty(output))
+            {
+                _logger.LogInformation(output);
+            }
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                _logger.LogError(error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred.");
+        }
+    }
+
     private static int GetParentProcessId(int processId)
     {
         var query = $"SELECT ParentProcessId FROM Win32_Process WHERE ProcessId = {processId}";
@@ -138,6 +228,7 @@ public class Worker : BackgroundService
             var processes = Process.GetProcesses();
             var childProcesses = processes.Where(p => GetParentProcessId(p.Id) == process.Id);
 
+            
             foreach (var p in childProcesses)
             {
                 try
@@ -151,9 +242,40 @@ public class Worker : BackgroundService
                 }
 
             }
+
+            
             process.Kill();
             process.Dispose();
+
             process = null;
+            if(!string.IsNullOrEmpty(workingDir))
+            {
+                var controllerProcesses = processes.Where(p =>
+                {
+                    try
+                    {
+                        return p.MainModule.FileName == Path.Combine(workingDir, "A", "controller.exe")
+                            || p.MainModule.FileName == Path.Combine(workingDir, "B", "controller.exe");
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
+
+                foreach (var p in controllerProcesses)
+                {
+                    try
+                    {
+                        p.Kill();
+                        p.Dispose();
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            
         }
     }
 }
