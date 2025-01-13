@@ -8,12 +8,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 	<RepositoryUrl>https://github.com/aron-666/Aron.Titan.Agent.Windows</RepositoryUrl>
-	<FileVersion>1.0.0.1</FileVersion>
-	<AssemblyVersion>1.0.0.1</AssemblyVersion>
+	<FileVersion>1.0.0.3</FileVersion>
+	<AssemblyVersion>1.0.0.3</AssemblyVersion>
+	<ProductVersion>1.0.0.3</ProductVersion>
+	<ProductName>Aron.Titan.Agent</ProductName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>none</DebugType>
+    <DebugType>full</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
